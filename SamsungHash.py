@@ -89,14 +89,14 @@ for _ in range(epochs):
     #Backpropagation
     error = yp - predicted_output
     d_predicted_output = error * sigmoid_derivative(predicted_output)
-    
-    error_hidden_layer = d_predicted_output.dot(w1_virtual.T)
+#    print(d_predicted_output,"D",w1_virtual,"S",w1_real)
+    error_hidden_layer = d_predicted_output.dot(np.array([w1_real]))
     d_hidden_layer = error_hidden_layer * sigmoid_derivative(hidden_layer_output)
 
     #Updating Weights and Biases
-    w1_virtual += hidden_layer_output.T.dot(d_predicted_output) * lr
-    #output_bias += np.sum(d_predicted_output,axis=0,keepdims=True) * lr
-    w_virtual += X.T.dot(d_hidden_layer) * lr
+    w1_real += hidden_layer_output.T.dot(d_predicted_output) * lr
+    #outpu3t_bias += np.sum(d_predicted_output,axis=0,keepdims=True) * lr
+    w_real += X.T.dot(d_hidden_layer) * lr
     #hidden_bias += np.sum(d_hidden_layer,axis=0,keepdims=True) * lrion from inde of the element to the 
         
         
