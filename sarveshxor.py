@@ -144,6 +144,9 @@ for _ in range(epochs):
     realx += X.T.dot(d_hidden_layer) * lr
     print("w",realx)
     #hidden_bias += np.sum(d_hidden_layer,axis=0,keepdims=True) * lr #ion from inde of the element to the 
+    
+w1_virtual = w1_(hidden_size, output_size, real )
+w_virtual = w_(input_size, hidden_size, realx)
         
         
         
