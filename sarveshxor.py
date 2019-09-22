@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Aug  4 11:05:06 2019
 
+@author: Dell
+"""
 import numpy as np
 epochs = 100
 input_size, hidden_size, output_size = 2, 6, 1
@@ -47,27 +52,30 @@ print("w_real", w_real)
 import xxhash
 x = xxhash.xxh64()
 hash_value = []
-for i in range(input_size):
-    for j in range(hidden_size):
-        y = str(i)+str(j)
-        y=bytes(y,'utf-8')
-        x.update(y)
-        k=x.intdigest()
-        
-        k=k%comp_ratio
-        hash_value.append(k)
-        w_virtual[i][j] = w_real[i][k]
-        
-for i in range(hidden_size):
-    for j in range(output_size):
-        y = str(i)+str(j)
-        y=bytes(y,'utf-8')
-        x.update(y)
-        k=x.intdigest()
-        
-        k=k%comp_ratio
-        hash_value.append(k)
-        w1_virtual[i][j] = w1_real[k]
+def w_(input_size,hidden_size,w_real):
+    for i in range(input_size):
+        for j in range(hidden_size):
+            y = str(i)+str(j)
+            y=bytes(y,'utf-8')
+            x.update(y)
+            k=x.intdigest()
+            
+            k=k%comp_ratio
+            hash_value.append(k)
+            w_virtual[i][j] = w_real[i][k]
+    return w_virtual
+def w1_(hidden_size, output_size, w1_real):
+    for i in range(hidden_size):
+        for j in range(output_size):
+            y = str(i)+str(j)
+            y=bytes(y,'utf-8')
+            x.update(y)
+            k=x.intdigest()
+            
+            k=k%comp_ratio
+            hash_value.append(k)
+            w1_virtual[i][j] = w1_real[k]
+    return w1_virtual
  
 
 def has_for_hlo(hidden_layer_output,X,comp_ratio): 
@@ -86,10 +94,13 @@ def has_for_hlo(hidden_layer_output,X,comp_ratio):
         #w1_virtual[i][j] = w1_real[k]
 
 print("WWWW", w_virtual,"\n " , w_real)
-        
-print(y)
+
+real = np.array([[i] for i in w1_real])
+
+realx =  w_real
 for _ in range(epochs):
     #Forward Propagation
+    w_virtual = w_(input_size, hidden_size, realx)
     hidden_layer_activation = np.dot(X,w_virtual)
     print("x",X)
     #hidden_layer_activation += hidden_bias
@@ -100,6 +111,7 @@ for _ in range(epochs):
     print("hlo",hlo)
     print("hidden",hidden_layer_output)
     
+    w1_virtual = w1_(hidden_size, output_size, real )
 #    output_layer_activation = np.dot(hlo,real)
     ola = np.dot(hidden_layer_output,w1_virtual)
 #    print("ola", ola)
@@ -115,16 +127,15 @@ for _ in range(epochs):
     d_predicted_output = error * sigmoid_derivative(predicted_output)
     print("dpred",d_predicted_output)
     
-    real = [[i] for i in w1_real]
+    
     error_hidden_layer = d_predicted_output.dot(np.array(real).T)
     print("errorhl",error_hidden_layer)
     
     d_hidden_layer = error_hidden_layer * sigmoid_derivative(hlo)
     print(d_hidden_layer)
-    real = np.array(real)
+    
     print("damn real",real.shape)
-    realx =  w_real
-    print(realx)
+    
     #Updating Weights and Biases
     real += hlo.T.dot(d_predicted_output) * lr
     print("w1",real)
@@ -133,6 +144,15 @@ for _ in range(epochs):
     realx += X.T.dot(d_hidden_layer) * lr
     print("w",realx)
     #hidden_bias += np.sum(d_hidden_layer,axis=0,keepdims=True) * lr #ion from inde of the element to the 
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
