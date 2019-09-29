@@ -12,7 +12,7 @@ import xxhash
 x = xxhash.xxh64()
 
 epochs = 10000
-input_size, hidden_size, output_size = 3, 10, 1
+input_size, hidden_size, output_size = 3, 7, 1
 lr = .1 # learning rate
 
 def sigmoid(x):
@@ -30,30 +30,44 @@ def hasingFunction(row,column):
         for j in range(column):
             y = str(i)+str(j)
             y=bytes(y,'utf-8')
-            x.update(y)
+            #x.update(y)
             # print("y",y)
-            k=x.intdigest()
+            #k=x.intdigest()
             # print(k)
-            k=k%comp_ratio
+            #k=k%comp_ratio
+            k = xxhash.xxh64(y,10).intdigest()%comp_ratio
             # print(k,type(k))
             hashing[i][j] = k
     return hashing
 
-def shareWeigths(hashMat,  realMat):
-    r,c = hashMat.shape
+def shareWeigths(virtualMat,  realMat):
+    r,c = virtualMat.shape
+    #print('--------------')
     virtualMat = np.zeros((r,c))
     for i in range(r):
         for j in range(c):
-            #print(hashMat[i][j])
-            virtualMat[i][j] = realMat[0][int(hashMat[i][j])]
+            y = str(i)+str(j)
+            y=bytes(y,'utf-8')
+            x.update(y)
+            #print("y",y)
+            k=x.intdigest()
+            # print(k)
+            k=k%comp_ratio
+            # print(k,type(k))
+            
+            #print(hashMat[i][j],'==',k,'==',xxhash.xxh64(y,10).intdigest()%comp_ratio)
+            
+            virtualMat[i][j] += realMat[0][xxhash.xxh64(y,10).intdigest()%comp_ratio]
     return virtualMat
 
-def reallyWeridIdea(virtualMat,hashMat,realMat):
-    r,c = hashMat.shape
+def reallyWeridIdea(virtualMat,realMat):
+    r,c = virtualMat.shape
     #errMat = np.zeros((r,c))
     for i in range(r):
         for j in range(c):
-            realMat[0][int(hashMat[i][j])] = virtualMat[i][j]
+            y = str(i)+str(j)
+            y=bytes(y,'utf-8')
+            realMat[0][xxhash.xxh64(y,10).intdigest()%comp_ratio] = virtualMat[i][j]
     #print('real',realMat)
     return realMat
     
@@ -72,8 +86,8 @@ def reallyWeridIdea(virtualMat,hashMat,realMat):
 #    w_virtual += np.dot(X.T, dH )
         
 
-X = np.array([[0,0,0], [1,0,1], [0,1,0], [0,0,1]])
-yp = np.array([ [0],   [0],   [1],   [1]])
+X = np.array([[0,0,0], [1,0,1], [0,1,0], [0,0,1],[0,0,0], [1,0,1], [0,1,0], [1,1,1]])
+yp = np.array([ [0],   [0],   [1],   [1],[0],   [0],   [1],   [1]])
 
 #hidden_layer = np.zeros((1,hidden_size))
 # compression ratio cannot be more than number of hidden nodes or hidden layer size
@@ -85,12 +99,12 @@ merror = []
 w_hash = hasingFunction(input_size,hidden_size)
 w1_hash =  hasingFunction(output_size, hidden_size)
 
-#w_virtual = np.random.uniform( size=(input_size,hidden_size))
+w_virtual = np.random.uniform( size=(input_size,hidden_size))
 w_real = np.random.uniform(size=(1,comp_ratio))
-w_virtual = shareWeigths(w_hash,w_real)
-#w1_virtual = np.random.uniform( size=(output_size, hidden_size))
+w_virtual = shareWeigths(w_virtual,w_real)
+w1_virtual = np.random.uniform( size=(output_size, hidden_size))
 w1_real = np.random.uniform(size=(1,comp_ratio))
-w1_virtual = shareWeigths(w1_hash,w1_real)
+w1_virtual = shareWeigths(w1_virtual,w1_real)
 #w_hash = np.zeros((input_size,hidden_size))
 #w1_hash = np.zeros((output_size, hidden_size))
 
@@ -125,13 +139,17 @@ for epoch in range(epochs):
     # backpropogation
     dE = error * lr
     w1_virtual += np.dot(dE.T, hidden_layer)
-    w1_real = reallyWeridIdea(w1_virtual,w1_hash,w1_real)
-    w1_virtual = shareWeigths(w1_hash,w1_real)
+    w1_real = reallyWeridIdea(w1_virtual,w1_real)
+    #print("================ here w1V==========")
+        
+    w1_virtual = shareWeigths(w1_virtual,w1_real)
     
     dH = dE.dot(w1_virtual) * sigmoid_derivative(hidden_layer)
     w_virtual += np.dot(X.T, dH )
-    w_real = reallyWeridIdea(w_virtual,w_hash,w_real)
-    w_virtual = shareWeigths(w_hash,w_real)
+    w_real = reallyWeridIdea(w_virtual,w_real)
+    #print("================ here w2V==========")
+    
+    w_virtual = shareWeigths(w_virtual,w_real)
     
 plt.title("mean error")
 plt.ylabel("error")
